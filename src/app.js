@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import morgan from 'morgan';
 
 const app = express();
 
@@ -13,3 +14,9 @@ app.use(cors(corsOptions))
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+if (process.env.NODE_ENV === 'development') {
+    app.use(morgan('dev'))
+} else {
+    app.use(morgan('combined'))
+}
