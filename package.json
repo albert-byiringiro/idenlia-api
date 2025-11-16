@@ -1,0 +1,12 @@
+{
+  "name": "idenlia-api",
+  "version": "1.0.0",
+  "description": "backend of identity based habit app (Inspired by Atomic Habits).",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
