@@ -20,3 +20,21 @@ if (process.env.NODE_ENV === 'development') {
 } else {
     app.use(morgan('combined'))
 }
+
+app.get('/', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Welcome to Idenlia API',
+        version: '1.0.0',
+        documentation: '/api/docs',
+        endpoints: {
+            auth: '/api/auth',
+            habits: '/api/habits',
+            identities: '/api/identities',
+            completions: '/api/completions',
+            settings: '/api/settings'
+        }
+    })
+})
+
+export default app

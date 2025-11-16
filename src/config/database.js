@@ -1,10 +1,8 @@
 import mongoose from "mongoose";
 
-const connectDB = async () => {
+export const connectDB = async () => {
     try {
         const options = {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
             maxPoolSize: 10,
 
             // timeout settings
