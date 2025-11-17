@@ -1,6 +1,8 @@
-import express from 'express'
-import cors from 'cors'
+// In your app.js (update it)
+import express from 'express';
+import cors from 'cors';
 import morgan from 'morgan';
+import authRoutes from './routes/authRoutes.js'; // Add this
 
 const app = express();
 
@@ -10,16 +12,18 @@ const corsOptions = {
     optionsSuccessStatus: 200,
 }
 
-app.use(cors(corsOptions))
-
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 if (process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev'))
+    app.use(morgan('dev'));
 } else {
-    app.use(morgan('combined'))
+    app.use(morgan('combined'));
 }
+
+// Add authentication routes
+app.use('/api/auth', authRoutes); // Add this line
 
 app.get('/', (req, res) => {
     res.json({
@@ -34,7 +38,7 @@ app.get('/', (req, res) => {
             completions: '/api/completions',
             settings: '/api/settings'
         }
-    })
-})
+    });
+});
 
-export default app
+export default app;

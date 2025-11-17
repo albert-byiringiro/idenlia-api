@@ -1,7 +1,5 @@
 import express from 'express'
-import { createGuestUser } from '../controllers/index.js'
-import { protect } from '../middleware/auth.js'
-
+import { createGuestUser } from '../controllers/authController.js'
 
 const router = express.Router();
 
