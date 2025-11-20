@@ -182,6 +182,21 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
     return false;
 }
 
+// Generate email verification token
+userSchema.methods.createEmailVerificationToken = function () {
+    // Generate random token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
+    // hash token and save to database
+    this.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex')
+
+    // set expiration (24 hours)
+    this.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
+
+    // Return unhashed token (send this via email)
+    return verificationToken;
+}
+
 userSchema.methods.setAsGuest = function () {
     this.isGuest = true;
     this.authType = 'guest';
