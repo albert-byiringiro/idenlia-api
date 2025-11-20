@@ -59,4 +59,58 @@ const validators = {
             .replace(/[<>]/g, '')
             .slice(0, 1000)
     }
+};
+
+/**
+ * Validation middleware factory using factory pattern 
+ */
+
+export const createValidator = (schema) => {
+    return (req, res, next) => {
+        const errors = [];
+
+        for (const [field, rules] of Object.entries(schema)) {
+            const value = req.body[field];
+
+            // check if required
+            if (rules.required && !value) {
+                errors.push({
+                    field,
+                    message: rules.message || `${field} is required`
+                });
+                continue;
+            }
+
+            // skip validation if filed is optional and not provided
+            if (!rules.required && !value) continue;
+
+            // Run custom validator
+            if (rules.validator) {
+                const result = rules.validator(value);
+                if(!result.isValid) {
+                    errors.push({
+                        field,
+                        message: result.error || rules.message
+                    })
+                }
+            }
+        }
+
+        if (errors.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'validation failed',
+                errors
+            });
+        }
+
+        // Sanitize all string inputs
+        for (const key in req.body) {
+            if (typeof req.body[key] === 'string') {
+                req.body[key] = validators.sanitizeInput(req.body[key])
+            }            
+        }
+
+        next()
+    }
 }
