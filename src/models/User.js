@@ -232,6 +232,14 @@ userSchema.methods.incLoginAttempts = async function () {
 
 }
 
+// Reset login attempts
+userSchema.methods.resetLoginAttempts = async function () {
+    return await this.updateOne({
+        $set: { loginAttempts: 0 },
+        $unset: { lockUntil: 1 }
+    });
+}
+
 userSchema.methods.setAsGuest = function () {
     this.isGuest = true;
     this.authType = 'guest';
