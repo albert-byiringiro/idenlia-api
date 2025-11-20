@@ -47,4 +47,16 @@ const validators = {
         
         return { isValid: true, error: null };
     },
+
+    /**
+     * Sanitize input (prevent XSS) 
+     */
+    sanitizeInput(input){
+        if (typeof input !== 'string') return input
+
+        return input
+            .trim()
+            .replace(/[<>]/g, '')
+            .slice(0, 1000)
+    }
 }
