@@ -17,11 +17,17 @@ const userSchema = new mongoose.Schema({
 
     password: {
         type: String,
-        minlength: 8,
-        select: false
+        minlength: [8, 'Password must be at least 8 characters.'],
+        select: false,
+        validate: {
+            validator: function(v) {
+                if (!v) return true;
+                return /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])/.test(v);
+            },
+            message: 'Password must contain at least one number, one lowercase and one uppercase letter'
+        }
     },
 
-    // Guest-specific fields
     authType: {
         type: String,
         enum: ['guest', 'email', 'google', 'github'],
@@ -29,6 +35,31 @@ const userSchema = new mongoose.Schema({
         default: 'guest'
     },
 
+    name: {
+        type: String,
+        required: [true, 'Name is required'],
+        trim: true,
+        minlength: [2, 'Name must be at least 2 characters'],
+        minlength: [50, 'Name cannot exceed 50 characters'],
+    },
+
+    avatar: {
+        type: String,
+        default: null,
+    },
+    
+    // Account status
+    isActive: {
+        type: Boolean,
+        default: true,
+    },
+
+    isEmailVerified: {
+        type: Boolean,
+        default: false,
+    },
+
+    // Guest Management
     isGuest: {
         type: Boolean,
         default: false
@@ -39,21 +70,65 @@ const userSchema = new mongoose.Schema({
         default: null
     },
 
-    // Profile data
-    name: {
+    // Email verification
+    emailVerificationToken: {
         type: String,
-        trim: true,
-        default: function() {
-            return this.authType === 'guest' ? 'Guest User' : '';
-        }
+        select: false,
     },
-    
+
+    emailVerificationExpires: {
+        type: Date,
+        select: false,
+    },
+
+    // Password reset
+    resetPasswordToken: {
+        type: String,
+        select: false,
+    },
+
+    resetPasswordExpires: {
+        type: Date,
+        select: false,
+    },
+
+    // Refresh token for JWT rotation
+    refreshToken: {
+        type: String,
+        select: false,
+    },
+
+    // Security
     lastLogin: {
         type: Date,
-        default: Date.now
-    }
+        default: Date.now()
+    },
+
+    loginAttempts: {
+        type: Number,
+        default: 0,
+    },
+
+    lockUntil: {
+        type: Date,
+    },
+
+    passwordChangeAt: {
+        type: Date,
+    },
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: {
+        virtuals: true,
+        transform: function(doc, ret) {
+            delete ret.password;
+            delete ret.refreshToken;
+            delete ret.emailVerificationToken;
+            delete ret.resetPasswordToken;
+            return ret;
+        }
+    },
+    toObject: { virtuals: true }
 });
 
 userSchema.index({ guestExpiresAt: 1 });
