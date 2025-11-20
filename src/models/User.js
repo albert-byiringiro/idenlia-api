@@ -240,11 +240,42 @@ userSchema.methods.resetLoginAttempts = async function () {
     });
 }
 
+// Set as guest
 userSchema.methods.setAsGuest = function () {
     this.isGuest = true;
     this.authType = 'guest';
 
     this.guestExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * STATIC METHODS 
+ */ 
+
+// Find user by credentials (email/password)
+userSchema.statics.findByCredentials = async function (email, password) {
+    const user = await this.findOne({ email, authType: 'email' }).select('+password +loginAttempts +lockUntil');
+
+    if (!user) {
+        throw new Error('Invalid email or password');
+    }
+
+    if (user.isLocked) {
+        throw new Error('Account is locked due to too many fialed login attempts. Please Please try again later.')
+    }
+
+    const isMatch = await user.comparePassword(password);
+
+    if (!isMatch) {
+        await user.incLoginAttempts();
+        throw new Error('Invalid email or password');
+    }
+
+    if (user.loginAttempts > 0) {
+        await user.resetLoginAttempts();
+    }
+
+    return user;
 }
 
 export const User = mongoose.model('User', userSchema)
