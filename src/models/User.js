@@ -120,7 +120,7 @@ const userSchema = new mongoose.Schema({
     timestamps: true,
     toJSON: {
         virtuals: true,
-        transform: function(doc, ret) {
+        transform: function(_doc, ret) {
             delete ret.password;
             delete ret.refreshToken;
             delete ret.emailVerificationToken;
@@ -131,7 +131,11 @@ const userSchema = new mongoose.Schema({
     toObject: { virtuals: true }
 });
 
+// Indexes
 userSchema.index({ guestExpiresAt: 1 });
+userSchema.index({ email: 1 });
+userSchema.index({ resetPasswordToken: 1 });
+userSchema.index({ emailVerificationToken: 1 });
 
 userSchema.methods.setAsGuest = function () {
     this.isGuest = true;
