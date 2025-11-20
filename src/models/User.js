@@ -208,6 +208,30 @@ userSchema.methods.createPasswordResetToken = function () {
     return resetToken;
 }
 
+// Increment login attempts
+userSchema.methods.incLoginAttempts = async function () {
+    // reset attemps if lock has expired
+    if (this.lockUntil && this.lockUntil < Date.now()) {
+        return await this.updateOne({
+            $set: { loginAttempts: 1 },
+            $unset: { lockUntil: 1 },
+        })
+    }
+
+    const updates = { $inc: { loginAttempts: 1 } };
+
+    // Lock account for 2 hours after 5 failed attempts
+    const maxAttempts = 5;
+    const lockTime = 2 * 60 * 60 * 1000;
+
+    if (this.loginAttempts + 1 >= maxAttempts && !this.isLocked) {
+        updates.$set = { lockUntil: Date.now() + lockTime }
+    }
+
+    return await this.updateOne(updates)
+
+}
+
 userSchema.methods.setAsGuest = function () {
     this.isGuest = true;
     this.authType = 'guest';
