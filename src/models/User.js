@@ -142,6 +142,28 @@ userSchema.virtual('isLocked').get(function() {
     return !!(this.lockUntil && this.lockUntil > Date.now());
 })
 
+// Pre-save middleware - hash password
+userSchema.pre('save', async function (next) {
+    // Only hash if password is modified
+    if (!this.isModified('password')) return next();
+
+    if (!this.password) return next();
+
+    try {
+        const salt = await bcrypt.genSalt(12);
+        this.password = await bcrypt.hash(this.password, salt);
+
+        // Set password changed timestamp
+        if (!this.isNew) {
+            this.passwordChangeAt = Date.now() - 1000;
+        }
+
+        next()
+    } catch (error) {
+        next(error)
+    }
+});
+
 userSchema.methods.setAsGuest = function () {
     this.isGuest = true;
     this.authType = 'guest';
