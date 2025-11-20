@@ -164,6 +164,14 @@ userSchema.pre('save', async function (next) {
     }
 });
 
+/**
+ * INSTANCE METHODS 
+ */ 
+
+userSchema.methods.comparePassword = async function (candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password)
+}
+
 userSchema.methods.setAsGuest = function () {
     this.isGuest = true;
     this.authType = 'guest';
