@@ -172,6 +172,16 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password)
 }
 
+// Check if password has changed after JWT has been issued
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+    if (this.passwordChangeAt) {
+        const changedTimestamp = parseInt(this.passwordChangeAt.getTime() / 1000, 10);
+        return JWTTimestamp < changedTimestamp;
+    }
+
+    return false;
+}
+
 userSchema.methods.setAsGuest = function () {
     this.isGuest = true;
     this.authType = 'guest';
