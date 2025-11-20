@@ -197,6 +197,17 @@ userSchema.methods.createEmailVerificationToken = function () {
     return verificationToken;
 }
 
+userSchema.methods.createPasswordResetToken = function () {
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex')
+
+    this.resetPasswordExpires = Date.now() + 60 * 60 * 1000;
+
+    return resetToken;
+}
+
 userSchema.methods.setAsGuest = function () {
     this.isGuest = true;
     this.authType = 'guest';
