@@ -25,5 +25,26 @@ const validators = {
                 number: !hasNumber ? `Password must contain at least one number` : null,
             }
         }
-    }
+    },
+
+    isValidName(name) {
+        const trimmed = name?.trim();
+        const minLength = 2;
+        const maxLength = 50;
+        const hasValidChars = /^[a-zA-Z\s'-]+$/.test(trimmed);
+        
+        if (!trimmed || trimmed.length < minLength) {
+        return { isValid: false, error: `Name must be at least ${minLength} characters` };
+        }
+        
+        if (trimmed.length > maxLength) {
+        return { isValid: false, error: `Name cannot exceed ${maxLength} characters` };
+        }
+        
+        if (!hasValidChars) {
+        return { isValid: false, error: 'Name can only contain letters, spaces, hyphens, and apostrophes' };
+        }
+        
+        return { isValid: true, error: null };
+    },
 }
