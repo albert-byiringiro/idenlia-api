@@ -85,4 +85,33 @@ class EmailService {
     
     await this.send(user.email, 'Password Reset Request', html);
   }
+  
+    /**
+   * Send welcome email (after verification)
+   */
+  async sendWelcomeEmail(user) {
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Welcome to Idenlia! 🎉</h2>
+        <p>Hi ${user.name},</p>
+        <p>Your email has been verified successfully. You're all set to start building better habits!</p>
+        <p>Here's what you can do:</p>
+        <ul>
+          <li>Create your identity-based habits</li>
+          <li>Track your daily progress</li>
+          <li>Build consistent routines</li>
+        </ul>
+        <a href="${this.frontendUrl}/dashboard" 
+           style="display: inline-block; padding: 12px 24px; background-color: #10B981; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0;">
+          Go to Dashboard
+        </a>
+        <p>Happy habit building!</p>
+      </div>
+    `;
+    
+    await this.send(user.email, 'Welcome to Idenlia!', html);
+  }
 }
+
+
+export const emailService = new EmailService();
