@@ -59,4 +59,30 @@ class EmailService {
     
     await this.send(user.email, 'Verify Your Email Address', html);
   }
+
+  /**
+   * Send password reset email
+   */
+  async sendPasswordResetEmail(user, token) {
+    const resetUrl = `${this.frontendUrl}/reset-password?token=${token}`;
+    
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Password Reset Request</h2>
+        <p>Hi ${user.name},</p>
+        <p>You requested to reset your password. Click the button below to set a new password:</p>
+        <a href="${resetUrl}" 
+           style="display: inline-block; padding: 12px 24px; background-color: #DC2626; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0;">
+          Reset Password
+        </a>
+        <p>Or copy and paste this link into your browser:</p>
+        <p style="color: #666; word-break: break-all;">${resetUrl}</p>
+        <p style="color: #999; font-size: 12px; margin-top: 30px;">
+          This link will expire in 1 hour. If you didn't request a password reset, please ignore this email and your password will remain unchanged.
+        </p>
+      </div>
+    `;
+    
+    await this.send(user.email, 'Password Reset Request', html);
+  }
 }
