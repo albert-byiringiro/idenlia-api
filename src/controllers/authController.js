@@ -1,4 +1,7 @@
 import { User } from '../models/User.js';
+import { jwtService } from '../utils/jwt.js';
+import { emailService } from '../services/emailService.js';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
 /**
@@ -119,3 +122,84 @@ export const convertGuestToRegistered = async (req, res) => {
     });
   }
 };
+
+/**
+ * REGISTRATION
+ * POST /api/auth/register
+ */
+export const register = async (req, res) => {
+  try {
+    const { email, password, name } = req.body;
+
+    // check if user already exists
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email already registred'
+      })
+    }
+
+    const user = new User({
+      email,
+      password,
+      name,
+      authType: 'email',
+      isEmailVerified: false
+    })
+
+    // Generate email verification token
+    const verificationToken = user.createEmailVerificationToken();
+    await user.save();
+
+    // send verification email
+    await emailService.sendVerificationEmail(user, verificationToken);
+
+    const tokens = jwtService.generateTokenPair(user._id, user.email, user.authType);
+
+    // save refresh token to database
+    user.refreshToken = tokens.refreshToken;
+    await user.save({ validateBeforeSave: false })
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful. Please check your email to verify your account',
+      data: {
+        user: {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          isEmailVerified: user.isEmailVerified,
+          authType: user.authType
+        },
+        tokens
+      }
+    })
+  } catch (error) {
+    console.error('Registration error:', error);
+
+    // Handle duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email already registered'
+      });
+    }
+
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message)
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors
+      })
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Registration failed. Please try again.'
+    })
+  }
+}
