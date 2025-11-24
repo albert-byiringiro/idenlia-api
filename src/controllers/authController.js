@@ -292,3 +292,45 @@ export const verifyEmail = async (req, res) => {
     })
   }
 }
+
+/**
+ * RESEND VERIFICATION EMAIL
+ * POST /api/auth/resend-verification
+ */
+export const resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body
+
+    const user = await User.findOne({ email, authType: 'email' });
+
+    if (!user) {
+      return res.status(404).json({
+        success: true,
+        message: 'User not found',
+      })
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email already verified'
+      })
+    }
+
+    const verificationToken = user.createEmailVerificationToken();
+    await user.save({ validateBeforeSave: false });
+
+    await emailService.sendVerificationEmail(user, verificationToken)
+
+    res.json({
+      success: true,
+      message: 'Verification email sent',
+    });
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send verification email',
+    })
+  }
+}
