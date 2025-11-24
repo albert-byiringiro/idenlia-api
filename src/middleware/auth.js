@@ -80,3 +80,18 @@ export const protect = async (req, res, next) => {
     });
   }
 };
+
+/**
+ * Require email verification
+ * Use after protect middleware
+ */
+export const requireVerification = (req, res, next) => {
+  if (!req.user.isEmailVerified && req.user.authType === 'email') {
+    return res.status(403).json({
+      success: false,
+      message: 'Please verify your email address ato access this resource'
+    });
+  }
+
+  next()
+}
