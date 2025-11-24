@@ -62,25 +62,15 @@ export const convertGuestToRegistered = async (req, res) => {
   try {
     const { email, password, name } = req.body;
     
-    // req.user comes from auth middleware (we'll create next)
     const user = await User.findById(req.user.userId);
     
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-    
-    // Check if user is actually a guest
-    if (!user.isGuest) {
+    if (!user || !user.isGuest) {
       return res.status(400).json({
         success: false,
-        message: 'User is already registered'
+        message: 'Invalid operation'
       });
     }
     
-    // Check if email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -89,18 +79,23 @@ export const convertGuestToRegistered = async (req, res) => {
       });
     }
     
-    // Convert guest to registered user
     user.email = email;
-    user.password = password; // Will be hashed by pre-save hook
+    user.password = password;
     user.name = name || user.name;
     user.authType = 'email';
     user.isGuest = false;
     user.guestExpiresAt = null;
     
+    const verificationToken = user.createEmailVerificationToken();
     await user.save();
     
-    // Generate new token (optional, but good practice)
-    const token = generateToken(user._id);
+    await emailService.sendVerificationEmail(user, verificationToken);
+    
+    const tokens = jwtService.generateTokenPair(
+      user._id,
+      user.email,
+      user.authType
+    );
     
     res.json({
       success: true,
@@ -110,9 +105,9 @@ export const convertGuestToRegistered = async (req, res) => {
           id: user._id,
           email: user.email,
           name: user.name,
-          isGuest: user.isGuest
+          isEmailVerified: user.isEmailVerified
         },
-        token
+        tokens
       }
     });
     
