@@ -23,10 +23,13 @@ export const createGuestUser = async (req, res) => {
   try {
     const guestUser = new User();
     guestUser.setAsGuest();
-    
     await guestUser.save();
     
-    const token = generateToken(guestUser._id);
+    const tokens = jwtService.generateTokenPair(
+      guestUser._id,
+      null,
+      'guest'
+    );
     
     res.status(201).json({
       success: true,
@@ -38,12 +41,11 @@ export const createGuestUser = async (req, res) => {
           isGuest: guestUser.isGuest,
           expiresAt: guestUser.guestExpiresAt
         },
-        token
+        tokens
       }
     });
-    
   } catch (error) {
-    console.error('Guest user creation error:', error);
+    console.error('Guest creation error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create guest account'
@@ -533,3 +535,4 @@ export const getCurrentUser = async (req, res) => {
     })
   }
 }
+
