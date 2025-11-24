@@ -469,3 +469,27 @@ export const refreshToken = async (req, res) => {
     })
   }
 }
+
+/**
+ * LOGOUT
+ * POST /api/auth/logout
+ */
+export const logout = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user.userId, {
+      $unset: { refreshToken: 1 }
+    });
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: true,
+      message: 'Logout failed',
+    })
+  }
+}
