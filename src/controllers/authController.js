@@ -334,3 +334,39 @@ export const resendVerification = async (req, res) => {
     })
   }
 }
+
+/**
+ * FORGOT PASSWORD
+ * POST /api/auth/forgot-password
+ */
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email, authType: 'email' });
+
+    if (!user) {
+      res.json({
+        success: true,
+        message: 'If an account exists with this email, you will receive a password reset link.'
+      })
+    }
+
+    const resetToken = user.createPasswordResetToken();
+    await user.save({ validateBeforeSave: false });
+
+    await emailService.sendPasswordResetEmail(user, resetToken)
+
+    res.json({
+      success: true,
+      message: 'If an account exists with this email, you will receive a password reset link'
+    })
+
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process password reset request'
+    })
+  }
+}
