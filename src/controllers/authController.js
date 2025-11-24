@@ -425,3 +425,47 @@ export const resetPassword = async (req, res) => {
     })
   }
 }
+
+/**
+ * REFRESH TOKEN
+ * POST /api/auth/refresh
+ */
+export const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token required'
+      });
+    }
+
+    const decoded = jwtService.verifyRefreshToken(refreshToken);
+
+    const user = await User.findById(decoded.userId).select('+refreshToken');
+
+    if (!user || user.refreshToken !== refreshToken) {
+      res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token',
+      })
+    }
+
+    const tokens = jwtService.generateTokenPair(user._id, user.email, user.authType);
+
+    user.refreshToken = tokens.refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    res.json({
+      success: true,
+      data: { tokens }
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(401).json({
+      success: true,
+      message: 'Token refresh failed'
+    })
+  }
+}
