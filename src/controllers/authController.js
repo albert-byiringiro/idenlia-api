@@ -493,3 +493,43 @@ export const logout = async (req, res) => {
     })
   }
 }
+
+/**
+ * GET CURRENT USER
+ * GET /api/auth/me
+ */
+export const getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          avatar: user.avatar,
+          isEmailVerified: user.isEmailVerified,
+          authType: user.authType,
+          isGuest: user.isGuest,
+          createdAt: user.createdAt
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get current user error:', error);
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user data',
+    })
+  }
+}
