@@ -2,6 +2,7 @@ import { User } from '../models/User.js';
 import { jwtService } from '../utils/jwt.js';
 import { emailService } from '../services/emailService.js';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 /**
  * Generate JWT token for a user
@@ -243,5 +244,51 @@ export const login = async (req, res) => {
       success: false,
       message: error.message || 'Login failed'
     });
+  }
+}
+
+/**
+ * VERIFY EMAIL
+ * POST /api/auth/verify-email
+ */
+export const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // Hash the token from URL to compare with database
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Find user with valid token
+    const user = await User.findOne({
+      emailVerificationToken: hashedToken,
+      emailVerificationExpires: { $gt: Date.now() }
+    }).select('+emailVerificationToken +emailVerificationExpires');
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token',
+      });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    // send welcome email
+    await emailService.sendWelcomeEmail(user);
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully',
+    });
+
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Email verification failed',
+    })
   }
 }
