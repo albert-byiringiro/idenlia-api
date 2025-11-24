@@ -1,7 +1,6 @@
 import { User } from '../models/User.js';
 import { jwtService } from '../utils/jwt.js';
 import { emailService } from '../services/emailService.js';
-import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
 /**
@@ -201,5 +200,48 @@ export const register = async (req, res) => {
       success: false,
       message: 'Registration failed. Please try again.'
     })
+  }
+}
+
+/**
+ * LOGIN
+ * POST /api/auth/login
+ */
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    // Find user and verify credentials
+    const user = await User.findByCredentials(email, password);
+
+    user.lastLogin = new Date();
+
+    // Generate tokens
+    const tokens = jwtService.generateTokenPair(user._id, user.email, user.authType);
+
+    user.refreshToken = tokens.refreshToken;
+    await user.save({ validateBeforeSave: false })
+
+    res.json({
+      session: true,
+      message: 'Login successful',
+      data: {
+        user: {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          isEmailVerified: user.isEmailVerified,
+          authType: user.authType
+        },
+        tokens
+      }
+    });
+  } catch (error) {
+    console.error('Login error', error);
+
+    res.status(401).json({
+      success: false,
+      message: error.message || 'Login failed'
+    });
   }
 }
