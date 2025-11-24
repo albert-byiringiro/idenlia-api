@@ -95,3 +95,15 @@ export const requireVerification = (req, res, next) => {
 
   next()
 }
+
+/**
+ * Restrict to registered users only (no guests)
+ */
+export const restrictRegistered = (req, res, next) => {
+  if (req.user.isGuest) {
+    return res.status(403).json({
+      success: false,
+      message: 'This feature is only available to registered users.'
+    })
+  }
+}
