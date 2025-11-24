@@ -370,3 +370,58 @@ export const forgotPassword = async (req, res) => {
     })
   }
 }
+
+/**
+ * RESET PASSWORD
+ * POST /api/auth/reset-password
+ */
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    // Hash token to compare with database
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Find user with valid reset token
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() }
+    }).select('+resetPasswordToken +resetPasswordExpires');
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset token'
+      })
+    }
+
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    user.passwordChangeAt = Date.now();
+    await user.save();
+
+    const tokens = jwtService.generateTokenPair(user._id, user.email, user.authType);
+
+    res.json({
+      success: true,
+      message: 'Password reset successful',
+      data: { tokens }
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Password validation failed',
+      })
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Password reset failed'
+    })
+  }
+}
