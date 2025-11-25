@@ -66,3 +66,13 @@ export const validatePasswordReset = createValidator({
     validator: validators.isValidPassword
   }
 });
+
+/**
+ * Token validation
+ */
+export const validateToken = createValidator({
+  token: {
+    required: true,
+    message: 'Token is required'
+  }
+});
