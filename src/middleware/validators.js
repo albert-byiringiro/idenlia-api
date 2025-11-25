@@ -52,3 +52,17 @@ export const validateEmail = createValidator({
     }
   }
 });
+
+/**
+ * Password reset validation
+ */
+export const validatePasswordReset = createValidator({
+  token: {
+    required: true,
+    message: 'Reset token is required'
+  },
+  password: {
+    required: true,
+    validator: validators.isValidPassword
+  }
+});
