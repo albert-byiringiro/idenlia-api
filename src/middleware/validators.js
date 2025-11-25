@@ -37,3 +37,18 @@ export const validateLogin = createValidator({
     message: 'Password is required'
   }
 });
+
+/**
+ * Email validation
+ */
+export const validateEmail = createValidator({
+  email: {
+    required: true,
+    validator: (value) => {
+      if (!validators.isValidEmail(value)) {
+        return { isValid: false, error: 'Invalid email format' };
+      }
+      return { isValid: true };
+    }
+  }
+});
