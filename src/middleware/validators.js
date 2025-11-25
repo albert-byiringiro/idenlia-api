@@ -76,3 +76,13 @@ export const validateToken = createValidator({
     message: 'Token is required'
   }
 });
+
+/**
+ * Refresh token validation
+ */
+export const validateRefreshToken = createValidator({
+  refreshToken: {
+    required: true,
+    message: 'Refresh token is required'
+  }
+});
