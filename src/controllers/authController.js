@@ -2,7 +2,7 @@ import { User } from '../models/User.js';
 import { jwtService } from '../utils/jwt.js';
 import { emailService } from '../services/emailService.js';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto'
+import crypto from 'crypto';
 import passport from '../config/passport.js';
 
 /**
@@ -533,66 +533,45 @@ export const getCurrentUser = async (req, res) => {
 }
 
 /**
- * GOOGLE OAUTH - Initiate
+ * ============================================
+ * GOOGLE OAUTH FUNCTIONS
+ * ============================================
+ */
+
+/**
+ * Initiate Google OAuth Flow
  * GET /api/auth/google
- * 
- * This route initiates the Google OAuth flow.
- * Passport redirects user to Google login page.
- * 
- * Learning Point: We don't write the redirect logic ourselves.
- * Passport middleware handles it based on our strategy configuration.
  */
 export const googleAuth = passport.authenticate('google', {
   scope: ['profile', 'email'],
   session: false
 });
 
-
 /**
- * GOOGLE OAUTH - Callback
+ * Handle Google OAuth Callback
  * GET /api/auth/google/callback
- * 
- * Google redirects here after user grants/denies permission.
- * 
- * Flow:
- * 1. Passport receives authorization code from Google
- * 2. Passport exchanges code for access token
- * 3. Passport fetches user profile with access token
- * 4. Our verify callback (in passport.js) runs
- * 5. User object is attached to req.user
- * 6. This function generates JWT and redirects to frontend
  */
 export const googleCallback = (req, res, next) => {
   passport.authenticate('google', { session: false }, async (err, user, info) => {
     try {
-      // Handle authentication errors
       if (err) {
-        console.error('Google OAuth error:', err);
+        console.error('❌ Google OAuth error:', err);
         const errorMessage = encodeURIComponent(err.message || 'Authentication failed');
         return res.redirect(`${process.env.FRONTEND_URL}/login?error=${errorMessage}`);
       }
       
-      // Handle case where no user was returned
       if (!user) {
-        console.error('Google OAuth: No user returned');
+        console.error('❌ Google OAuth: No user returned');
         return res.redirect(`${process.env.FRONTEND_URL}/login?error=authentication_failed`);
       }
       
-      // Generate JWT tokens for this user
-      const tokens = jwtService.generateTokenPair(
-        user._id,
-        user.email,
-        user.authType
-      );
+      const tokens = jwtService.generateTokenPair(user._id, user.email, user.authType);
       
-      // Save refresh token to database
       user.refreshToken = tokens.refreshToken;
       await user.save({ validateBeforeSave: false });
       
       console.log('✅ Google OAuth successful for:', user.email);
       
-      // Redirect to frontend with tokens
-      // Frontend should extract these from URL and store securely
       const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?` +
         `accessToken=${tokens.accessToken}&` +
         `refreshToken=${tokens.refreshToken}&` +
@@ -601,7 +580,7 @@ export const googleCallback = (req, res, next) => {
       res.redirect(redirectUrl);
       
     } catch (error) {
-      console.error('Error in Google callback:', error);
+      console.error('❌ Error in Google callback:', error);
       res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
     }
   })(req, res, next);
