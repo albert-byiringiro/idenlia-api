@@ -1,10 +1,10 @@
-import dotenv from 'dotenv'
-import app from './src/app.js';
-import { connectDB } from './src/config/database.js';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Set port
+import app from './src/app.js';
+import { connectDB } from './src/config/database.js';
+
 const PORT = process.env.PORT || 8000;
 
 const startServer = async () => {
@@ -15,15 +15,9 @@ const startServer = async () => {
     // Start Express server
     const server = app.listen(PORT, () => {
       console.log(`
-╔════════════════════════════════════════╗
-║                                        ║
-║   🚀 Idenlia API Server Running       ║
-║                                        ║
 ║   Environment: ${process.env.NODE_ENV?.padEnd(23) || 'development'.padEnd(23)} ║
 ║   Port: ${PORT.toString().padEnd(31)} ║
-║   URL: http://localhost:${PORT}${' '.repeat(16)} ║
-║                                        ║
-╚════════════════════════════════════════╝
+║   URL: http://localhost:${PORT}${' '.repeat(16)}
       `);
     });
     
@@ -40,7 +34,8 @@ const startServer = async () => {
         console.log('HTTP server closed');
         
         try {
-          await require('mongoose').connection.close();
+          const mongoose = await import('mongoose');
+          await mongoose.default.connection.close();
           console.log('MongoDB connection closed');
           process.exit(0);
         } catch (error) {

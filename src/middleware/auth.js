@@ -1,16 +1,15 @@
-// middleware/auth.js
-import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
+import { jwtService } from '../utils/jwt.js';
 
 /**
  * Protect routes - verify JWT token
- * Add this to routes that require authentication
+ * For routes that require authentication
  */
 export const protect = async (req, res, next) => {
   try {
     let token;
     
-    // Get token from Authorization header
+    // Extract token from Authorization header
     if (req.headers.authorization?.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     }
@@ -23,56 +22,89 @@ export const protect = async (req, res, next) => {
     }
     
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwtService.verifyAccessToken(token);
     
-    // Check if user exists
+    // Find user
     const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'User not found'
+        message: 'User no longer exists'
       });
     }
     
-    // Check if guest user has expired
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Account has been deactivated'
+      });
+    }
+    
+    // Check if password was changed after token was issued
+    if (user.changedPasswordAfter(decoded.iat)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Password recently changed. Please log in again.'
+      });
+    }
+    
+    // Check guest expiration
     if (user.isGuest && user.guestExpiresAt < new Date()) {
       return res.status(401).json({
         success: false,
-        message: 'Guest account has expired'
+        message: 'Guest account expired'
       });
     }
     
-    // Attach user to request object
+    // Attach user to request
     req.user = {
       userId: user._id,
       email: user.email,
+      name: user.name,
       isGuest: user.isGuest,
-      authType: user.authType
+      authType: user.authType,
+      isEmailVerified: user.isEmailVerified
     };
     
-    next(); // Continue to route handler
+    next();
     
   } catch (error) {
     console.error('Auth middleware error:', error);
     
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token'
-      });
-    }
-    
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Token expired'
-      });
-    }
-    
-    res.status(500).json({
+    return res.status(401).json({
       success: false,
-      message: 'Authentication failed'
+      message: error.message || 'Authentication failed'
     });
   }
+};
+
+/**
+ * Require email verification
+ * Use after protect middleware
+ */
+export const requireVerification = (req, res, next) => {
+  if (!req.user.isEmailVerified && req.user.authType === 'email') {
+    return res.status(403).json({
+      success: false,
+      message: 'Please verify your email address to access this resource'
+    });
+  }
+
+  next();
+};
+
+/**
+ * Restrict to registered users only (no guests)
+ */
+export const restrictToRegistered = (req, res, next) => {
+  if (req.user.isGuest) {
+    return res.status(403).json({
+      success: false,
+      message: 'This feature is only available to registered users.'
+    });
+  }
+  
+  next();
 };
