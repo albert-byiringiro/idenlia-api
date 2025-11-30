@@ -1,6 +1,5 @@
-// middleware/auth.js
-import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
+import { jwtService } from '../utils/jwt.js';
 
 /**
  * Protect routes - verify JWT token
@@ -89,21 +88,23 @@ export const requireVerification = (req, res, next) => {
   if (!req.user.isEmailVerified && req.user.authType === 'email') {
     return res.status(403).json({
       success: false,
-      message: 'Please verify your email address ato access this resource'
+      message: 'Please verify your email address to access this resource'
     });
   }
 
-  next()
-}
+  next();
+};
 
 /**
  * Restrict to registered users only (no guests)
  */
-export const restrictRegistered = (req, res, next) => {
+export const restrictToRegistered = (req, res, next) => {
   if (req.user.isGuest) {
     return res.status(403).json({
       success: false,
       message: 'This feature is only available to registered users.'
-    })
+    });
   }
-}
+  
+  next();
+};
