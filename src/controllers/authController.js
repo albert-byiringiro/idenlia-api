@@ -3,6 +3,7 @@ import { jwtService } from '../utils/jwt.js';
 import { emailService } from '../services/emailService.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto'
+import passport from 'passport';
 
 /**
  * Generate JWT token for a user
@@ -531,3 +532,17 @@ export const getCurrentUser = async (req, res) => {
   }
 }
 
+/**
+ * GOOGLE OAUTH - Initiate
+ * GET /api/auth/google
+ * 
+ * This route initiates the Google OAuth flow.
+ * Passport redirects user to Google login page.
+ * 
+ * Learning Point: We don't write the redirect logic ourselves.
+ * Passport middleware handles it based on our strategy configuration.
+ */
+export const googleAuth = passport.authenticate('google', {
+  scope: ['profile', 'email'],
+  session: false
+});
