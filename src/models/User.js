@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import crypto from 'crypto'
 
 const userSchema = new mongoose.Schema({
     email: {
@@ -7,11 +9,11 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         trim: true,
         validate: {
-        validator: function(v) {
-            if (!v) return true;
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-        },
-        message: 'Invalid email format'
+            validator: function(v) {
+                if (!v) return true;
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+            },
+            message: 'Invalid email format'
         }
     },
 
@@ -40,7 +42,10 @@ const userSchema = new mongoose.Schema({
         required: [true, 'Name is required'],
         trim: true,
         minlength: [2, 'Name must be at least 2 characters'],
-        minlength: [50, 'Name cannot exceed 50 characters'],
+        maxlength: [50, 'Name cannot exceed 50 characters'],
+        default: function() {
+            return this.authType === 'guest' ? 'Guest user' : undefined;
+        }
     },
 
     avatar: {
@@ -101,7 +106,7 @@ const userSchema = new mongoose.Schema({
     // Security
     lastLogin: {
         type: Date,
-        default: Date.now()
+        default: Date.now
     },
 
     loginAttempts: {
@@ -261,7 +266,7 @@ userSchema.statics.findByCredentials = async function (email, password) {
     }
 
     if (user.isLocked) {
-        throw new Error('Account is locked due to too many fialed login attempts. Please Please try again later.')
+        throw new Error('Account is locked due to too many failed login attempts. Please try again later.')
     }
 
     const isMatch = await user.comparePassword(password);
