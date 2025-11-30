@@ -154,6 +154,10 @@ userSchema.index({ email: 1 });
 userSchema.index({ resetPasswordToken: 1 });
 userSchema.index({ emailVerificationToken: 1 });
 
+// ADD THESE:
+userSchema.index({ googleId: 1 });
+userSchema.index({ githubId: 1 });
+
 // Virtual for account locked status
 userSchema.virtual('isLocked').get(function() {
     return !!(this.lockUntil && this.lockUntil > Date.now());
