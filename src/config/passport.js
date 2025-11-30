@@ -91,3 +91,29 @@ passport.use(
         }
     )
 )
+
+/**
+ * Serialize User
+ * 
+ * Determines what user data to store in session.
+ * We're using JWT, so this isn't critical, but required by Passport
+ */
+passport.serializeUser((user, done) => {
+    done(null, user._id);
+});
+
+/**
+ * Deserialize user
+ * 
+ * Retrieves full user object from session data.
+ */ 
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await User.findById(id);
+        done(null, user);
+    } catch (error) {
+        done(error, null)
+    }
+})
+
+export default passport;
