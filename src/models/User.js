@@ -30,6 +30,18 @@ const userSchema = new mongoose.Schema({
         }
     },
 
+    googleId: {
+        type: String,
+        sparse: true,
+        select: false,
+    },
+
+    githubId: {
+        type: String,
+        sparse: true,
+        select: false,
+    },
+
     authType: {
         type: String,
         enum: ['guest', 'email', 'google', 'github'],
