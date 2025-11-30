@@ -1,28 +1,31 @@
 /**
  * Server Entry Point
- * 
  */
 
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Import modules AFTER dotenv has loaded
 import app from './src/app.js';
 import { connectDB } from './src/config/database.js';
-import passport from './src/config/passport.js';
+import passport, { configurePassport } from './src/config/passport.js';
 
 const PORT = process.env.PORT || 8000;
 
 /**
  * Start Server
- * 
- * Initialization sequence:
- * 1. Initialize Passport middleware
- * 2. Connect to MongoDB
- * 3. Start Express server
- * 4. Set up graceful shutdown handlers
  */
 const startServer = async () => {
   try {
+    // ========================================
+    // Configure Passport Strategies
+    // AFTER env vars are loaded
+    // ========================================
+    configurePassport();
+    
+    // ========================================
+    // Initialize Passport Middleware
+    // ========================================
     console.log('🔐 Initializing Passport...');
     app.use(passport.initialize());
     console.log('✅ Passport initialized\n');
@@ -32,17 +35,21 @@ const startServer = async () => {
     
     // Start Express server
     const server = app.listen(PORT, () => {
-      console.log(`Environment: ${process.env.NODE_ENV?.padEnd(23) || 'development'.padEnd(23)} \n Port: ${PORT.toString().padEnd(31)} \n URL: http://localhost:${PORT}${' '.repeat(16)}`);
+      console.log(`
+╔════════════════════════════════════════╗
+║                                        ║
+║   🚀 Idenlia API Server Running       ║
+║                                        ║
+║   Environment: ${process.env.NODE_ENV?.padEnd(23) || 'development'.padEnd(23)} ║
+║   Port: ${PORT.toString().padEnd(31)} ║
+║   URL: http://localhost:${PORT}${' '.repeat(16)} ║
+║                                        ║
+╚════════════════════════════════════════╝
+      `);
     });
     
     /**
      * Graceful Shutdown Handler
-     * 
-     * Handles SIGTERM and SIGINT signals properly:
-     * - Stops accepting new requests
-     * - Waits for existing requests to complete
-     * - Closes database connections
-     * - Exits process cleanly
      */
     const gracefulShutdown = async (signal) => {
       console.log(`\n${signal} received. Closing server gracefully...`);
@@ -61,14 +68,12 @@ const startServer = async () => {
         }
       });
       
-      // Force shutdown after 10 seconds if graceful shutdown hangs
       setTimeout(() => {
         console.error('Forcing shutdown after timeout');
         process.exit(1);
       }, 10000);
     };
     
-    // Listen for termination signals
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
     
@@ -78,15 +83,10 @@ const startServer = async () => {
   }
 };
 
-// Start the server
 startServer();
 
 /**
  * Global Error Handlers
- * 
- * Last resort for uncaught errors:
- * - Log the error
- * - Exit process (let process manager restart)
  */
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
