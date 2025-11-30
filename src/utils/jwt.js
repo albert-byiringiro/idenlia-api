@@ -1,3 +1,4 @@
+// src/utils/jwt.js
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
@@ -5,11 +6,32 @@ import crypto from 'crypto';
  * JWT Utility 
  */ 
 class JWTService {
-    constructor() {
-        this.accessTokenSecret = process.env.JWT_SECRET;
-        this.refreshTokenSecret = process.env.JWT_REFRESH_SECRET;
-        this.accessTokenExpiry = process.env.JWT_EXPIRES_IN || "15m";
-        this.refreshTokenSecret = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+    /**
+     * Get access token secret
+     */
+    get accessTokenSecret() {
+        return process.env.JWT_SECRET;
+    }
+    
+    /**
+     * Get refresh token secret
+     */
+    get refreshTokenSecret() {
+        return process.env.JWT_REFRESH_SECRET;
+    }
+    
+    /**
+     * Get access token expiry
+     */
+    get accessTokenExpiry() {
+        return process.env.JWT_EXPIRES_IN || '15m';
+    }
+    
+    /**
+     * Get refresh token expiry
+     */
+    get refreshTokenExpiry() {
+        return process.env.JWT_REFRESH_EXPIRES_IN || '7d';
     }
 
     /**
@@ -39,8 +61,8 @@ class JWTService {
         };
 
         return jwt.sign(payload, this.refreshTokenSecret, {
-            expiresIn: this.refreshTokenSecret
-        })
+            expiresIn: this.refreshTokenExpiry
+        });
     }
 
     /**
@@ -66,12 +88,12 @@ class JWTService {
 
             return decoded;
         } catch (error) {
-            throw new Error('Invalid or expired access token')
+            throw new Error('Invalid or expired access token');
         }
     }
 
     /**
-     * Verify Access Token
+     * Verify Refresh Token
      */ 
     verifyRefreshToken(token) {
         try {
@@ -83,7 +105,7 @@ class JWTService {
 
             return decoded;
         } catch (error) {
-            throw new Error('Invalid or expired refresh token')
+            throw new Error('Invalid or expired refresh token');
         }
     }
 
@@ -96,4 +118,4 @@ class JWTService {
 }
 
 // Export singleton instance
-export const jwtService = new JWTService()
+export const jwtService = new JWTService();
