@@ -2,7 +2,8 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import authRoutes from './routes/authRoutes.js'; // Add this
+import authRoutes from './routes/authRoutes.js';
+import passport from './config/passport.js';
 
 const app = express();
 
@@ -22,8 +23,8 @@ if (process.env.NODE_ENV === 'development') {
     app.use(morgan('combined'));
 }
 
-// Add authentication routes
-app.use('/api/auth', authRoutes); // Add this line
+app.use(passport.initialize());
+app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
     res.json({
