@@ -3,7 +3,7 @@ import { jwtService } from '../utils/jwt.js';
 import { emailService } from '../services/emailService.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto'
-import passport from 'passport';
+import passport from '../config/passport.js';
 
 /**
  * Generate JWT token for a user
