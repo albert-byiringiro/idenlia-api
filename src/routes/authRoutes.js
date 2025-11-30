@@ -10,7 +10,9 @@ import {
   refreshToken,
   getCurrentUser,
   createGuestUser,
-  convertGuestToRegistered
+  convertGuestToRegistered,
+  googleAuth,
+  googleCallback,
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import {
@@ -32,6 +34,8 @@ router.post('/resend-verification', validateEmail, resendVerification);
 router.post('/forgot-password', validateEmail, forgotPassword);
 router.post('/reset-password', validatePasswordReset, resetPassword);
 router.post('/refresh', validateRefreshToken, refreshToken);
+router.get('/google', googleAuth);
+router.get('/google/callback', googleCallback);
 
 // Guest routes
 router.post('/guest', createGuestUser);
