@@ -12,7 +12,7 @@ import {
   createGuestUser,
   convertGuestToRegistered
 } from '../controllers/authController.js';
-import { protect, requireVerification, restrictToRegistered } from '../middleware/auth.js';
+import { protect } from '../middleware/auth.js';
 import {
   validateRegistration,
   validateLogin,

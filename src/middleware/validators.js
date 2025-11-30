@@ -1,4 +1,4 @@
-import { createValidator, validators } from "../utils/validation";
+import { createValidator, validators } from "../utils/validation.js";
 
 /**
  * Registration validation
