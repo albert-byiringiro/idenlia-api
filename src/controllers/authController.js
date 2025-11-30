@@ -585,3 +585,87 @@ export const googleCallback = (req, res, next) => {
     }
   })(req, res, next);
 };
+
+
+/**
+ * ============================================
+ * GITHUB OAUTH FUNCTIONS
+ * ============================================
+ */
+
+/**
+ * Initiate GitHub OAuth Flow
+ * 
+ * GET /api/auth/github
+ * 
+ * How it works (same as Google):
+ * 1. User clicks "Sign in with GitHub"
+ * 2. This endpoint redirects to GitHub login
+ * 3. User authorizes on GitHub
+ * 4. GitHub redirects back to our callback
+ */
+export const githubAuth = passport.authenticate('github', {
+  scope: ['user:email'], // Request email access
+  session: false
+});
+
+/**
+ * Handle GitHub OAuth Callback
+ * 
+ * GET /api/auth/github/callback
+ * 
+ * Same flow as Google, just different provider
+ * 
+ * @param {Request} req
+ * @param {Response} res
+ * @param {Function} next
+ */
+export const githubCallback = (req, res, next) => {
+  passport.authenticate('github', { session: false }, async (err, user, info) => {
+    try {
+      // ========================================
+      // Handle Authentication Errors
+      // ========================================
+      if (err) {
+        console.error('❌ GitHub OAuth error:', err);
+        const errorMessage = encodeURIComponent(err.message || 'Authentication failed');
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=${errorMessage}`);
+      }
+      
+      // ========================================
+      // Handle Case Where No User Returned
+      // ========================================
+      if (!user) {
+        console.error('❌ GitHub OAuth: No user returned');
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=authentication_failed`);
+      }
+      
+      // ========================================
+      // Generate JWT Tokens
+      // ========================================
+      const tokens = jwtService.generateTokenPair(user._id, user.email, user.authType);
+      
+      // ========================================
+      // Save Refresh Token to Database
+      // ========================================
+      user.refreshToken = tokens.refreshToken;
+      await user.save({ validateBeforeSave: false });
+      
+      console.log('✅ GitHub OAuth successful for:', user.email);
+      
+      // ========================================
+      // Redirect to Frontend with Tokens
+      // ========================================
+      const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?` +
+        `accessToken=${tokens.accessToken}&` +
+        `refreshToken=${tokens.refreshToken}&` +
+        `authType=github`;
+      
+      res.redirect(redirectUrl);
+      
+    } catch (error) {
+      console.error('❌ Error in GitHub callback:', error);
+      res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
+    }
+  })(req, res, next);
+};
