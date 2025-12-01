@@ -5,12 +5,58 @@
  * For development: Use console logging
  * For production: Integrate with SendGrid, AWS SES, etc.
  */
+import nodemailer from 'nodemailer'
 
 class EmailService {
     constructor() {
         this.from = process.env.EMAIL_FROM || 'noreply@idenlia.com';
         this.frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        this.transporter = null;
+        this.initialiazeTransporter()
     }
+
+  /**
+   * Initialize Email Transporter
+   * 
+   * Creates a nodemailer transporter based on environment.
+   * - Development: Gmail SMTP
+   * - Production: SendGrid, AWS SES, etc. (configure as needed)
+   */
+
+  initialiazeTransporter() {
+      const hasEmailConfig = process.env.EMAIL_USER && process.env.EMAIL_PASSWORD;
+
+      if (!hasEmailConfig) {
+        console.warn('⚠️ Email credentials not configured. Emails will be logged to console only.');
+        console.warn('   To send real emails, add EMAIL_USER and EMAIL_PASSWORD to .env');
+        return;
+      }
+
+      try {
+        // Create Gmail transporter
+        this.transporter = nodemailer.createTransport({
+          host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+          port: parseInt(process.env.EMAIL_PORT) || 587,
+          secure: false, // true for 465, false for 587
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD
+          },
+          // Gmail-specific settings
+          tls: {
+            rejectUnauthorized: false // Allow self-signed certificates (development only)
+          }
+        });
+
+        console.log('✅ Email transporter initialized successfully');
+        
+        // Verify connection on startup
+        this.verifyConnection();
+      } catch (error) {
+        console.error('❌ Failed to initialize email transporter:', error);
+        this.transporter = null;
+      }
+  }
 
     /**
      * Send email (implement with real service in production)
