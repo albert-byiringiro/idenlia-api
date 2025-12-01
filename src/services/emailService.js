@@ -104,7 +104,7 @@ class EmailService {
       console.log('─────────────────────────────────────');
       console.log('To:', to);
       console.log('Subject:', subject);
-      console.log('Content:', html.substring(0, 200) + '...');
+      console.log('Content:', html);
       console.log('─────────────────────────────────────\n');
       return { success: true, mode: 'console' };
     }
