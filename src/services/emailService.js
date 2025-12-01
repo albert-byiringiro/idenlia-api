@@ -59,6 +59,25 @@ class EmailService {
   }
 
     /**
+     * Verify Email Connection
+     * 
+     * Tests SMTP connection to ensure credentials work.
+     * This runs automatically when the service initializes.
+     */
+    async verifyConnection() {
+      if (!this.transporter) return;
+
+      try {
+        await this.transporter.verify();
+        console.log('✅ SMTP connection verified - ready to send emails');
+      } catch (error) {
+        console.error('❌ SMTP connection failed:', error.message);
+        console.error('   Check your EMAIL_USER and EMAIL_PASSWORD in .env');
+        this.transporter = null;
+      }
+    }
+
+    /**
      * Send email (implement with real service in production)
      */
 
