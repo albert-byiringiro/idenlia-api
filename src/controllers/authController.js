@@ -423,30 +423,34 @@ export const resetPassword = async (req, res) => {
 export const refreshToken = async (req, res) => {
   try {
     const { refreshToken } = req.body;
-
+    
     if (!refreshToken) {
       return res.status(401).json({
         success: false,
         message: 'Refresh token required'
       });
     }
-
+    
+    // 1. Verify token signature
     const decoded = jwtService.verifyRefreshToken(refreshToken);
-
+    
+    // 2. Find user and check if token matches
     const user = await User.findById(decoded.userId).select('+refreshToken');
-
+    
     if (!user || user.refreshToken !== refreshToken) {
-      res.status(401).json({
+      return res.status(401).json({
         success: false,
         message: 'Invalid refresh token',
-      })
+      });
     }
-
+    
+    // 3. Generate NEW tokens
     const tokens = jwtService.generateTokenPair(user._id, user.email, user.authType);
-
+    
+    // 4. Replace old refresh token with new one
     user.refreshToken = tokens.refreshToken;
     await user.save({ validateBeforeSave: false });
-
+    
     res.json({
       success: true,
       data: { tokens }
@@ -454,9 +458,9 @@ export const refreshToken = async (req, res) => {
   } catch (error) {
     console.error('Refresh token error:', error);
     res.status(401).json({
-      success: true,
+      success: false,
       message: 'Token refresh failed'
-    })
+    });
   }
 }
 
