@@ -6,17 +6,6 @@ import crypto from 'crypto';
 import passport from '../config/passport.js';
 
 /**
- * Generate JWT token for a user
- */
-const generateToken = (userId) => {
-  return jwt.sign(
-    { userId },
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-};
-
-/**
  * Create a guest user account
  * POST /api/auth/guest
  */
@@ -397,9 +386,12 @@ export const resetPassword = async (req, res) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     user.passwordChangeAt = Date.now();
-    await user.save();
-
+    user.refreshToken = undefined;
+    
     const tokens = jwtService.generateTokenPair(user._id, user.email, user.authType);
+    
+    user.refreshToken = tokens.refreshToken;
+    await user.save({ validateBeforeSave: false });
 
     res.json({
       success: true,
