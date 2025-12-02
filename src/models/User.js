@@ -115,6 +115,11 @@ const userSchema = new mongoose.Schema({
         select: false,
     },
 
+    refreshTokenJti: {
+        type: String,
+        select: false
+    },
+
     // Security
     lastLogin: {
         type: Date,

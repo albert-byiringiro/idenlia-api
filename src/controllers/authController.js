@@ -207,7 +207,10 @@ export const login = async (req, res) => {
     // Generate tokens
     const tokens = jwtService.generateTokenPair(user._id, user.email, user.authType);
 
+    const decoded = jwtService.verifyRefreshToken(tokens.refreshToken);
+
     user.refreshToken = tokens.refreshToken;
+    user.refreshTokenJti = decoded.jti;
     await user.save({ validateBeforeSave: false })
 
     res.json({
@@ -435,20 +438,34 @@ export const refreshToken = async (req, res) => {
     const decoded = jwtService.verifyRefreshToken(refreshToken);
     
     // 2. Find user and check if token matches
-    const user = await User.findById(decoded.userId).select('+refreshToken');
+    const user = await User.findById(decoded.userId).select('+refreshToken +refreshTokenJti');
     
-    if (!user || user.refreshToken !== refreshToken) {
+    // Check both token and jti match
+    if (!user || 
+        user.refreshToken !== refreshToken || 
+        user.refreshTokenJti !== decoded.jti) {
+      
+      // SECURITY: Token reuse detected!
+      // Someone is trying to use an old refresh token
+      // Clear all tokens for this user
+      await User.findByIdAndUpdate(decoded.userId, {
+        $unset: { refreshToken: 1, refreshTokenJti: 1 }
+      });
+      
       return res.status(401).json({
         success: false,
-        message: 'Invalid refresh token',
+        message: 'Invalid refresh token - security breach detected'
       });
     }
     
     // 3. Generate NEW tokens
     const tokens = jwtService.generateTokenPair(user._id, user.email, user.authType);
-    
-    // 4. Replace old refresh token with new one
+    const newDecoded = jwtService.verifyRefreshToken(tokens.refreshToken);
+
+    // 4. Replace old refresh token with new one and store new jti
     user.refreshToken = tokens.refreshToken;
+    user.refreshTokenJti = newDecoded.jti;
+
     await user.save({ validateBeforeSave: false });
     
     res.json({
