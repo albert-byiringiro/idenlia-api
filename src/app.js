@@ -56,12 +56,12 @@ if (process.env.NODE_ENV === 'development') {
  */
 app.use('/api/auth', authRoutes);
 
-app.use('/api/habits', habitRoutes)
+app.use('/api/habit', habitRoutes)
 
 /**
  * Health Check / API Info Endpoint
  * 
- * GET / - Returns API information
+ * GET / - Returns API information      
  * Useful for:
  * - Verifying server is running
  * - Discovering available endpoints
