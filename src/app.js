@@ -8,6 +8,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import authRoutes from './routes/authRoutes.js';
+import habitRoutes from './routes/habitRoutes.js';
 
 const app = express();
 
@@ -54,6 +55,8 @@ if (process.env.NODE_ENV === 'development') {
  * All auth routes will be under /api/auth
  */
 app.use('/api/auth', authRoutes);
+
+app.use('/api/habits', habitRoutes)
 
 /**
  * Health Check / API Info Endpoint
