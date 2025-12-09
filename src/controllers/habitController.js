@@ -1,5 +1,7 @@
 import { Identity } from '../models/Identity.js'
 import { Habit } from '../models/Habit.js'
+import { getHabitsForDate } from '../services/habitsService.js';
+import { toISODate } from '../utils/dateUtils.js';
 /**
  * Create a new habit
  * POST /api/habit
@@ -189,6 +191,36 @@ export const deleteHabit = async (req, res, next) => {
         res.status(204).json({
             status: 'success',
             data: null,
+        });
+    } catch (error) {
+        res.status(400).json({
+            status: 'fail',
+            message: error.message,
+        });
+    }
+};
+
+/**
+ * Get all habits
+ * GET /api/habit
+ */
+export const getHabitsFortheDay = async (req, res, next) => {
+    try {
+        const isoDate = toISODate(req.params.date)
+
+        const habits = await Habit.find({})
+                                  .populate('identity', 'name usageCount')
+                                  .exec();
+
+        const filteredHabits = getHabitsForDate(habits, isoDate)
+
+        res.status(200).json({
+            status: 'success',
+            date: isoDate,
+            results: filteredHabits.length,
+            data: {
+                filteredHabits
+            }
         });
     } catch (error) {
         res.status(400).json({
